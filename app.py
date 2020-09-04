@@ -11,6 +11,7 @@ app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
 db = SQLAlchemy(app)
 e = db.create_engine(database_uri, {})
 
+#User table
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(256))
@@ -21,7 +22,7 @@ class User(db.Model):
 
     def __repr__(self):
         return self.name
-
+#Test1 table
 class Test1(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     test = db.Column(db.Text)
@@ -30,21 +31,25 @@ class Test1(db.Model):
     def __repr__(self):
         return  self.test
 
-#ORM -> DB with the following
+#Run in python shell to create on EC2
 #db.create_all()
 
+#Placeholder main page
 @app.route('/')
 def index():
     return 'hello'
 
+#GET info given name
 @app.route('/get_info/<_name>')
 def get_info(_name):
     try:
+        #bug: should be all(), since name is non-unique
         user = User.query.filter_by(name=_name.strip()).first()
         return jsonify(email=user.email, age=user.age) 
     except AttributeError:
         return 'user with this name not found'
 
+#Add user with given info
 @app.route('/add', methods=['POST'])
 def add():
     if request.method == 'POST':
@@ -59,6 +64,7 @@ def add():
     else:
         pass
 
+#Add new table
 @app.route('/create', methods=['POST'])
 def create():
     if request.method == 'POST':
@@ -85,7 +91,6 @@ with app.test_request_context():
     '''
     print(url_for('get_info', _name='abc'))
     '''
-
 
 if __name__ == '__main__':
     app.run(debug=True,host='0.0.0.0')
