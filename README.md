@@ -10,6 +10,7 @@ Due to time constraints, a number of desirable security and error handling featu
 
 
 ### gunicorn
+```
 [Unit]
 Description=Instance of Castodia flask 
 After=network.target
@@ -23,9 +24,11 @@ ExecStart=/usr/bin/gunicorn --workers 4 --bind 127.0.0.1:5000 wsgi:app
 
 [Install]
 WantedBy=multi-user.target
+```
 
 ### nginx
 
+```
 server {
     listen 80;
     server_name https://castodian.herokuapp.com/;
@@ -36,3 +39,4 @@ location / {
     proxy_pass http://unix:/home/tazik/Nextcloud/code/castodia/app.sock;
   }
 }
+```
