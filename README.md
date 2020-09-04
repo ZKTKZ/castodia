@@ -2,7 +2,7 @@
 
 This app consists of a Flask server connected to a PostgreSQL DB hosted on an AWS EC2 instance. A web server was hosted on Heroku at https://castodian.herokuapp.com/. 
 
-To test the HTTP requests, see here https://www.postman.com/collections/cb1b6fd854c1fa74c17b for the Postman collection.
+To test the HTTP requests, see here https://www.postman.com/collections/cb1b6fd854c1fa74c17b for the Postman collection, with default values for ease of use.
 
 Nginx was configured as a reverse proxy for incoming requests, sending them to Gunicorn for handling. I did not use a virtualenv for this project (not the best choice); so I will instead paste my systemd Gunicorn service as well as nginx configuration files below.
 
