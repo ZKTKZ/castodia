@@ -1,3 +1,4 @@
+import uuid
 import json
 from flask import Flask, request, url_for, jsonify
 from markupsafe import escape
@@ -43,8 +44,6 @@ def get_info(_name):
     except AttributeError:
         return 'user with this name not found'
 
-#TO-DO: add id pkey for collision
-#TO-DO: throw exception if already exists / non-unique
 @app.route('/add', methods=['POST'])
 def add():
     if request.method == 'POST':
@@ -53,7 +52,7 @@ def add():
             user = User(name=res.get('name'), email=res.get('email'), age=res.get('age'))
             db.session.add(user)
             db.session.commit()
-            return 'Success' 
+            return jsonify(success=True) 
         except BaseException as error:
             return ('An exception occured: {}'.format(error))
     else:
@@ -67,7 +66,7 @@ def create():
             pass
         columns = list(res)
         metadata = db.MetaData(bind=e)
-        t1 = db.Table('t1', metadata, db.Column('id', db.Integer, primary_key=True), *(db.Column(col, db.String(255)) for col in columns), extend_existing=True)
+        t1 = db.Table(str(uuid.uuid4()), metadata, db.Column('id', db.Integer, primary_key=True), *(db.Column(col, db.String(255)) for col in columns))
         print(type(t1))
         metadata.create_all()
         db.mapper(Object, t1)
@@ -80,7 +79,7 @@ def create():
             print(w.col)
         session.add(w)
         session.commit()
-        return 'Success' 
+        return 'Table updated' 
 
 with app.test_request_context():
     #Test url string format; 
