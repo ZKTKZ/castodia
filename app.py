@@ -3,10 +3,11 @@ from flask import Flask, request, url_for, jsonify
 from markupsafe import escape
 from flask_sqlalchemy import SQLAlchemy
 
-#TO-DO: move database_uri values to ENV vars
+#TO-DO: move database_uri values to ENV vars; security risk right now
 app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:pw@ec2-18-191-192-189.us-east-2.compute.amazonaws.com/postgres'
 db = SQLAlchemy(app)
+e = db.create_engine('postgresql://postgres:pw@ec2-18-191-192-189.us-east-2.compute.amazonaws.com/postgres', {})
 
 class User(db.Model):
     name = db.Column(db.String(128), primary_key=True)
@@ -18,7 +19,6 @@ class User(db.Model):
     def __repr__(self):
         return self.name
 
-#CREATE TABLE test1(id int GENERATED ALWAYS AS IDENTITy, test text, time_stamp TIMESTAMPtz);
 class Test1(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     test = db.Column(db.Text)
@@ -38,11 +38,12 @@ def index():
 def get_info(_name):
     try:
         user = User.query.filter_by(name=_name).first()
-        #TO-DO: return name as "outer key" of JSON
         return jsonify(email=user.email, age=user.age) 
     except AttributeError:
         return 'user with this name not found'
 
+#TO-DO: add id pkey for collision
+#TO-DO: throw exception if already exists / non-unique
 @app.route('/add', methods=['POST'])
 def add():
     if request.method == 'POST':
@@ -51,25 +52,40 @@ def add():
         user = User(name=res.get('name'), email=res.get('email'), age=res.get('age'))
         db.session.add(user)
         db.session.commit()
-        return res.get('name') 
+        return 'Success' 
     else:
-        #TO-DO: hrow proper rror handler
         pass
 
-#since data is arbitrary, storing JSON obj as dictionary
-#root nodes aka top-level keys are SQL columns
 @app.route('/create', methods=['POST'])
 def create():
     if request.method == 'POST':
         res = request.json
-        keys = list(res)
-        #table = db.Table('Table1', db.Column(
-        return str((list(res)))
+        class Object(object):
+            pass
+        columns = list(res)
+        metadata = db.MetaData(bind=e)
+        t1 = db.Table('t1', metadata, db.Column('id', db.Integer, primary_key=True), *(db.Column(col, db.String(255)) for col in columns), extend_existing=True)
+        print(type(t1))
+        metadata.create_all()
+        db.mapper(Object, t1)
+        Session = db.sessionmaker()
+        Session.configure(bind=e)
+        session = Session()
+        w = Object()
+        for col in res:
+            w.col = res[col]
+            print(w.col)
+        session.add(w)
+        session.commit()
+        #return str((list(res)))
+        return 'Success' 
 
 with app.test_request_context():
     #Test url string format; 
+    '''
     print(url_for('get_info', _name='abc'))
+    '''
 
-    #Test return value
-    #print(get_info('abc'))
 
+if __name__ == '__main__':
+    app.run(debug=True,host='0.0.0.0')
