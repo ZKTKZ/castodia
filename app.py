@@ -1,14 +1,15 @@
+from os import environ
 import uuid
 import json
 from flask import Flask, request, url_for, jsonify
 from markupsafe import escape
 from flask_sqlalchemy import SQLAlchemy
 
-#TO-DO: move database_uri values to ENV vars; security risk right now
 app = Flask(__name__)
-app.config['SQLALCHEMY_DATABASE_URI'] = 'postgresql://postgres:pw@ec2-18-191-192-189.us-east-2.compute.amazonaws.com/postgres'
+database_uri = 'postgresql://' + environ['pg_username'] + ':' + environ['pg_password'] + '@' + environ['pg_host'] + environ['pg_database']
+app.config['SQLALCHEMY_DATABASE_URI'] = database_uri
 db = SQLAlchemy(app)
-e = db.create_engine('postgresql://postgres:pw@ec2-18-191-192-189.us-east-2.compute.amazonaws.com/postgres', {})
+e = db.create_engine(database_uri, {})
 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -39,7 +40,7 @@ def index():
 @app.route('/get_info/<_name>')
 def get_info(_name):
     try:
-        user = User.query.filter_by(name=_name).first()
+        user = User.query.filter_by(name=_name.strip()).first()
         return jsonify(email=user.email, age=user.age) 
     except AttributeError:
         return 'user with this name not found'
@@ -49,7 +50,7 @@ def add():
     if request.method == 'POST':
         res = request.json
         try:
-            user = User(name=res.get('name'), email=res.get('email'), age=res.get('age'))
+            user = User(name=res.get('name').strip(), email=res.get('email').strip(), age=res.get('age'))
             db.session.add(user)
             db.session.commit()
             return jsonify(success=True) 
@@ -67,7 +68,6 @@ def create():
         columns = list(res)
         metadata = db.MetaData(bind=e)
         t1 = db.Table(str(uuid.uuid4()), metadata, db.Column('id', db.Integer, primary_key=True), *(db.Column(col, db.String(255)) for col in columns))
-        print(type(t1))
         metadata.create_all()
         db.mapper(Object, t1)
         Session = db.sessionmaker()
@@ -76,7 +76,6 @@ def create():
         w = Object()
         for col in res:
             w.col = res[col]
-            print(w.col)
         session.add(w)
         session.commit()
         return 'Table updated' 
