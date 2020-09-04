@@ -10,7 +10,8 @@ db = SQLAlchemy(app)
 e = db.create_engine('postgresql://postgres:pw@ec2-18-191-192-189.us-east-2.compute.amazonaws.com/postgres', {})
 
 class User(db.Model):
-    name = db.Column(db.String(128), primary_key=True)
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(256))
     email = db.Column(db.String(254), unique=True)
     age = db.Column(db.Integer)
     #TO-DO: automatic current timestamp
@@ -48,11 +49,13 @@ def get_info(_name):
 def add():
     if request.method == 'POST':
         res = request.json
-        print('response type: ' + str(type(res)))
-        user = User(name=res.get('name'), email=res.get('email'), age=res.get('age'))
-        db.session.add(user)
-        db.session.commit()
-        return 'Success' 
+        try:
+            user = User(name=res.get('name'), email=res.get('email'), age=res.get('age'))
+            db.session.add(user)
+            db.session.commit()
+            return 'Success' 
+        except BaseException as error:
+            return ('An exception occured: {}'.format(error))
     else:
         pass
 
@@ -77,7 +80,6 @@ def create():
             print(w.col)
         session.add(w)
         session.commit()
-        #return str((list(res)))
         return 'Success' 
 
 with app.test_request_context():
