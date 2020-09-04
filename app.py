@@ -53,7 +53,18 @@ def add():
         db.session.commit()
         return res.get('name') 
     else:
+        #TO-DO: hrow proper rror handler
         pass
+
+#since data is arbitrary, storing JSON obj as dictionary
+#root nodes aka top-level keys are SQL columns
+@app.route('/create', methods=['POST'])
+def create():
+    if request.method == 'POST':
+        res = request.json
+        keys = list(res)
+        #table = db.Table('Table1', db.Column(
+        return str((list(res)))
 
 with app.test_request_context():
     #Test url string format; 
